@@ -32,37 +32,49 @@
     <div id="map"></div>
 
     <script>
+        console.log('Script iniciando...');
+        
         var map;
         var markers = [];
         var currentEditingIndex = -1;
 
         function initMap() {
-            // Inicializar o mapa
-            map = L.map('map').setView([-15.78, -47.93], 4);
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-            }).addTo(map);
+            console.log('initMap chamado, Leaflet disponível:', typeof L !== 'undefined');
+            try {
+                // Inicializar o mapa
+                map = L.map('map').setView([-15.78, -47.93], 4);
+                console.log('Mapa criado com sucesso');
+                
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri'
+                }).addTo(map);
+                console.log('Tiles carregadas');
 
-            // Carregar marcadores salvos do localStorage
-            var savedMarkers = JSON.parse(localStorage.getItem('treeMarkers')) || [];
-            savedMarkers.forEach(function(markerData, index) {
-                var marker = L.marker([markerData.lat, markerData.lng]).addTo(map);
-                var popupContent = 'Árvore plantada em ' + new Date(markerData.date).toLocaleDateString();
-                if (markerData.size) popupContent += '<br>Tamanho: ' + markerData.size;
-                if (markerData.type) popupContent += '<br>Tipo: ' + markerData.type;
-                if (markerData.height) popupContent += '<br>Altura: ' + markerData.height;
-                popupContent += '<br><button onclick="editMarker(' + index + ')">Editar</button> <button onclick="removeMarker(' + index + ')">Remover</button>';
-                marker.bindPopup(popupContent);
-                markers.push({ data: markerData, marker: marker });
-            });
+                // Carregar marcadores salvos do localStorage
+                var savedMarkers = JSON.parse(localStorage.getItem('treeMarkers')) || [];
+                savedMarkers.forEach(function(markerData, index) {
+                    var marker = L.marker([markerData.lat, markerData.lng]).addTo(map);
+                    var popupContent = 'Árvore plantada em ' + new Date(markerData.date).toLocaleDateString();
+                    if (markerData.size) popupContent += '<br>Tamanho: ' + markerData.size;
+                    if (markerData.type) popupContent += '<br>Tipo: ' + markerData.type;
+                    if (markerData.height) popupContent += '<br>Altura: ' + markerData.height;
+                    popupContent += '<br><button onclick="editMarker(' + index + ')">Editar</button> <button onclick="removeMarker(' + index + ')">Remover</button>';
+                    marker.bindPopup(popupContent);
+                    markers.push({ data: markerData, marker: marker });
+                });
 
-            // Configurar listeners dos botões
-            document.getElementById('addMarker').addEventListener('click', addMarkerClick);
-            document.getElementById('exportData').addEventListener('click', exportData);
-            document.getElementById('downloadData').addEventListener('click', downloadData);
-            document.getElementById('importData').addEventListener('click', importData);
+                // Configurar listeners dos botões
+                document.getElementById('addMarker').addEventListener('click', addMarkerClick);
+                document.getElementById('exportData').addEventListener('click', exportData);
+                document.getElementById('downloadData').addEventListener('click', downloadData);
+                document.getElementById('importData').addEventListener('click', importData);
 
-            document.getElementById('status').innerHTML = 'Mapa carregado. Use o formulário para adicionar, editar ou remover árvores.';
+                document.getElementById('status').innerHTML = 'Mapa carregado! Use o formulário para adicionar árvores.';
+                console.log('Mapa pronto para uso');
+            } catch(e) {
+                console.error('Erro ao inicializar mapa:', e);
+                document.getElementById('status').innerHTML = 'Erro: ' + e.message;
+            }
         }
 
         // Função para editar marcador
@@ -199,12 +211,23 @@
         }
 
         // Aguardar até que o Leaflet esteja carregado
+        console.log('Aguardando Leaflet...');
         var initInterval = setInterval(function() {
+            console.log('Verificando Leaflet, tipo de L:', typeof L);
             if (typeof L !== 'undefined') {
+                console.log('Leaflet carregado!');
                 clearInterval(initInterval);
                 initMap();
             }
         }, 100);
+        
+        // Timeout de segurança
+        setTimeout(function() {
+            if (typeof L === 'undefined') {
+                console.error('ERRO: Leaflet não carregou após 5 segundos!');
+                document.getElementById('status').innerHTML = 'ERRO: Biblioteca Leaflet não carregou. Tente F5 para recarregar.';
+            }
+        }, 5000);
     </script>
 </body>
 </html>
